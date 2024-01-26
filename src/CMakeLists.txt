@@ -1,0 +1,5 @@
+add_executable(GGJ2024 main.cpp)
+target_link_options(GGJ2024 PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
+target_link_libraries(GGJ2024 GraphicsEnv)
+set(exec-name GGJ2024)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../Graphics-Environment/cmake/copy-resources.cmake")
