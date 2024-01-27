@@ -1,43 +1,88 @@
-
 #include <manager.h>
 #include <game/camera.h>
 #include <graphics/glm_helper.h>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <graphics/model_gen.h>
+#include <graphics/logger.h>
+
+#include "cooking.h"
+#include "consts.h"
 
 int main(int argc, char** argv) {
     ManagerState state;
     state.cursor = cursorState::disabled;
-    state.windowTitle = "minimum example";
+    state.windowTitle = "GGJ2024";
     state.conf.multisampling = true;
     state.conf.sample_shading = true;
+    state.conf.target_resolution[0] = WINDOW_WIDTH;
+    state.conf.target_resolution[1] = WINDOW_HEIGHT;
     
     Manager manager(state);
     ResourcePool* pool = manager.render->pool();
 
-    Resource::Model monkey = pool->model()->load("models/monkey.obj");
-    glm::mat4 monkeyMat = glm::translate(glm::rotate(glm::mat4(1.0f), glm::radians(270.0f),
-						     glm::vec3(-1.0f, 0.0f, 0.0f)),
-					 glm::vec3(0.0f, -8.0f, -10.0f));    
-    Resource::Font font = pool->font()->load("textures/Roboto-Black.ttf");
+    Cooking cooking(pool);
+    
+    Resource::Texture bg = pool->tex()->load("textures/house.png");
+    Resource::Font font = pool->font()->load("textures/Mali-Light.ttf");
+    ModelInfo::Model sphereData = genSurface([](float a, float b){
+	return glm::vec3(sin(a)*cos(b), sin(a)*sin(b), cos(a));
+    }, true, 1.0, {0, 22.0/7, 0.1}, {0, 44.0/7, 0.1});
+    sphereData.meshes[0].diffuseColour = glm::vec4(0.5f, 0.7f, 0.0f, 1.0f);
+    //sphereData.meshes[0].diffuseTextures.push_back("testscreen.png");
+    Resource::Model sphere = pool->model()->load(sphereData);
+    glm::mat4 sphereMat = glm::translate(glm::mat4(1.0f), glm::vec3(10, 0, 0));
 
     manager.render->LoadResourcesToGPU(pool);
     manager.render->UseLoadedResources();
 
     camera::FirstPerson cam;
+    cam.setForward(glm::vec3(-1, 0, 0));
     cam.setPos(glm::vec3(0, 0, 0));
-    manager.audio.Play("audio/test.wav", false, 1.0f);
+    cam.control(glm::vec2(0));
+
+    float elapsed = 0;
+
     while(!glfwWindowShouldClose(manager.window)) {
 	manager.update();
-	
 	if(manager.input.kb.press(GLFW_KEY_ESCAPE))
 	    glfwSetWindowShouldClose(manager.window, GLFW_TRUE);
-	cam.flycamUpdate(manager.input, manager.timer);
-	manager.render->set3DViewMat(cam.getView(), cam.getPos());
+	if(manager.input.kb.press(GLFW_KEY_F))
+	    manager.toggleFullscreen();
+	glm::vec3 dir(0);
+	if(manager.input.kb.hold(GLFW_KEY_Q))
+	    dir.x += 1;
+	if(manager.input.kb.hold(GLFW_KEY_E))
+	    dir.x -= 1;
+	if(manager.input.kb.hold(GLFW_KEY_A))
+	    dir.y += 1;
+	if(manager.input.kb.hold(GLFW_KEY_D))
+	    dir.y -= 1;
+	if(manager.input.kb.hold(GLFW_KEY_W))
+	    dir.z += 1;
+	if(manager.input.kb.hold(GLFW_KEY_S))
+	    dir.z -= 1;
+
+
+	if(manager.timer.dt() < 50) {
+	    cooking.Update(manager.timer, manager.input);
+	}
+
 	
+	sphereMat = glm::translate(sphereMat, dir * 0.01f * (float)manager.timer.dt());
+	manager.render->set3DViewMat(cam.getView(), cam.getPos());
+	elapsed += (float)manager.timer.dt() * 0.001f;
+	manager.render->setShaderProps({elapsed});
 	if(manager.winActive()) {
-	    manager.render->DrawModel(monkey, monkeyMat, glm::inverseTranspose(monkeyMat));
-	    manager.render->DrawString(font, "Minimum Example", glm::vec2(220.0f, 50.0f),
-				       50.0f, 1.0f, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
+	    manager.render->DrawQuad(
+	    	    bg, glmhelper::calcMatFromRect(glm::vec4(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT), 0, 0.01f));
+	    //manager.render->DrawModel(sphere, sphereMat, glm::inverseTranspose(sphereMat));
+	    cooking.Draw(manager.render);
+
+	    manager.render->DrawString(font,
+				       "fps: " + std::to_string(1.0/(0.001 * manager.timer.dt())),
+				       glm::vec2(20, 30), 40.0f, DEPTH_AVG, glm::vec4(1.0f)
+				       );
+		
 	    manager.render->EndDraw();
 	}
     }
