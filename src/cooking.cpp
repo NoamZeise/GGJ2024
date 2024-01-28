@@ -6,7 +6,9 @@
 #include <game/random.h>
 
 
-Pan::Pan(Resource::Texture tex, float scale) : Drawable(tex, scale) {}
+Pan::Pan(Resource::Texture tex, Resource::Texture front, float scale) : Drawable(tex, scale) {
+    this->front = front;
+}
 
 
 void Pan::Update(Timer &timer, Input &input) {
@@ -16,6 +18,9 @@ void Pan::Update(Timer &timer, Input &input) {
     mouseDiff *= timer.dt() * PAN_SPEED;
     rect.x += mouseDiff.x;
     rect.y += mouseDiff.y;
+
+    rotate += mouseDiff.x*0.0003f*timer.dt();
+    rotate -= rotate*0.01f*timer.dt();
 
     if(rect.x + rect.z < 0)
 	rect.x = -rect.z;
@@ -27,8 +32,15 @@ void Pan::Update(Timer &timer, Input &input) {
 	rect.y = WINDOW_HEIGHT;
 }
 
+void Pan::Draw(Render* render) {
+    Drawable::Draw(render);
+    glm::mat4 m = glm::translate(mat, glm::vec3(0, 0, DEPTH_STEP*2.0f));    
+    render->DrawQuad(front, m);
+}
+
 Cooking::Cooking(ResourcePool* pool) {
-    this->pan = Pan(pool->tex()->load("textures/cooking/pan.png"), 0.5f);
+    this->pan = Pan(pool->tex()->load("textures/cooking/pan.png"),
+		    pool->tex()->load("textures/cooking/pan-front.png"), 0.5f);
     this->font = pool->font()->load("textures/Mali-Light.ttf");
     fishTex = pool->tex()->load("textures/cooking/fish.png");
     pan.rect.x = (WINDOW_WIDTH / 2) - (pan.rect.z/3);
@@ -54,7 +66,10 @@ void Cooking::Update(Timer &timer, Input &input) {
 	addFish();
     }    
     pan.Update(timer, input);    
-    glm::vec4 panline(pan.rect.x + 8, pan.rect.y + pan.rect.w/2, pan.rect.z / 2, 2);
+    glm::vec2 off(pan.rect.x + pan.rect.z/2, pan.rect.y + pan.rect.w/1.5);
+    glm::vec2 p1 = gh::rot(glm::vec2(-pan.rect.z/2.2, 0), pan.rotate) + off;
+    glm::vec2 p2 = gh::rot(glm::vec2(pan.rect.z/16, 0), pan.rotate) + off;
+    
     for(int i = 0; i < fishes.size(); i++) {
 	Fish* fish = &fishes[i];
 	fish->Update(timer);
@@ -62,7 +77,7 @@ void Cooking::Update(Timer &timer, Input &input) {
 	    score += fish->getDoneness() - 1;
 	    fishes.erase(fishes.begin() + i--);
 	} else {
-	    fish->panUpdate(panline, pan.vel());
+	    fish->panUpdate(p1, p2, pan.vel());
 	}
     }
 }
@@ -71,11 +86,10 @@ void Cooking::Draw(Render* render) {
     pan.Draw(render);
     int i = 0;
     for(auto& fish: fishes) {
-	fish.depth = DEPTH_AVG + (i/10.0)*DEPTH_STEP;
+	fish.depth = DEPTH_AVG + (i/100.0)*DEPTH_STEP;
 	fish.Draw(render);
 	i++;
-    }
-    
+    }    
     render->DrawString(font, "Score: " + std::to_string(score),
 		       glm::vec2(10, 20), 25, DEPTH_AVG, glm::vec4(1.0f));
 }

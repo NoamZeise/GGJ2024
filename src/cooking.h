@@ -8,11 +8,13 @@
 class Pan : public Drawable {
 public:
     Pan(){}
-    Pan(Resource::Texture tex, float scale);
+    Pan(Resource::Texture tex, Resource::Texture front, float scale);
     void Update(Timer &timer, Input &input);
+    void Draw(Render* render) override;
     glm::vec2 vel() { return mouseDiff; }
 private:
     glm::vec2 mouseDiff;
+    Resource::Texture front;
 };
 
 class Cooking {

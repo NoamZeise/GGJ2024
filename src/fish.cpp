@@ -51,25 +51,30 @@ void Fish::Update(Timer &timer) {
     }
 }
 
-void Fish::panUpdate(glm::vec4 pan, glm::vec2 panVel) {
+void Fish::panUpdate(glm::vec2 pan1, glm::vec2 pan2, glm::vec2 panVel) {
     const float MAX = 40.0f;
     const float MAX_DT = 400.0f;
-    const float FRICT = 0.3f;
-    const float BOUNCE = 0.9f;
+    const float FRICT = 0.9f;
+    const float BOUNCE = 0.8f;
     const float BOUNCE_X = 0.01f;
     const float PAN_POW = 400.0f;
+
+    glm::vec2 midPan = (pan1 + pan2) / 2.0f;
     
     float dirPrev = glm::sign(prevPan.y - prevMid.y); // pos => below last frame
-    float dir = glm::sign(pan.y - mid.y);
-    bool wentThrough = (dirPrev != dir  && dir == -1 && prevPan != glm::vec4(0)
+    float dir = glm::sign(midPan.y - mid.y);
+    
+    bool wentThrough = (dirPrev != dir  && dir == -1 && prevPan != glm::vec2(0)
 			&& prevMid != glm::vec2(0));
-    if(wentThrough && !gh::colliding(
-	       glm::vec2(r1.x > r2.x ? r2.x : r1.x, r1.x > r2.x ? r1.x : r2.x),
-	       glm::vec2(pan.x, pan.x + pan.z))) {
+    if(wentThrough &&
+       (gh::colliding(midPan + panVel, prevPan - panVel, mid + vel, prevMid - vel) == glm::vec2(0) &&
+	!gh::colliding(
+		glm::vec2(r1.x > r2.x ? r2.x : r1.x, r1.x > r2.x ? r1.x : r2.x),
+		glm::vec2(pan1.x, pan2.x)))){
 	wentThrough = false;
     }
     dir = dirPrev;
-    glm::vec2 c = gh::colliding(r1, r2, glm::vec2(pan.x, pan.y), glm::vec2(pan.x + pan.z, pan.y));
+    glm::vec2 c = gh::colliding(r1, r2, pan1, pan2);
     if(c != glm::vec2(0) || wentThrough) {
 	if(!collided) {
 	    collided = true;
@@ -87,10 +92,10 @@ void Fish::panUpdate(glm::vec4 pan, glm::vec2 panVel) {
 
 	float miny = r1.y > r2.y ? r1.y : r2.y;
 	
-	mid.y -= dir * fabs(miny - pan.y)*1.1f;
+	mid.y -= dir * fabs(miny - midPan.y)*1.1f;
 	vel.x = (1 - FRICT)*vel.x + (FRICT)*panVel.x - pivotD*BOUNCE_X*fabs(vel.y);
 	vel.y = (-dir * vel.y * BOUNCE)
-	    + ((glm::sign(panVel.y) == glm::sign(mid.y - pan.y)) ? panVel.y*PAN_POW : 0);
+	    + ((glm::sign(panVel.y) == glm::sign(mid.y - midPan.y)) ? panVel.y*PAN_POW : 0);
 	
     } else {
 	collided = false;
@@ -99,7 +104,7 @@ void Fish::panUpdate(glm::vec4 pan, glm::vec2 panVel) {
     if(fabs(vel.y) > MAX)
 	vel.y = MAX * glm::sign(vel.y);
 
-    prevPan = pan;
+    prevPan = midPan;
     prevMid = mid;
 }
 

@@ -9,7 +9,7 @@ public:
     Fish(Resource::Texture tex, float scale, glm::vec2 mid);
     void Update(Timer &timer);
     void Draw(Render* render) override;
-    void panUpdate(glm::vec4 pan, glm::vec2 panVel);
+    void panUpdate(glm::vec2 pan1, glm::vec2 p2, glm::vec2 panVel);
     bool fishAbove = false;
     void addVel(glm::vec2 v) { vel += v;}
     bool isDone() { return done; }
@@ -23,7 +23,7 @@ private:
     glm::vec2 mid;
     glm::vec4 collider;
     
-    glm::vec4 prevPan;
+    glm::vec2 prevPan;
     glm::vec2 prevMid;
     glm::vec2 r1;
     glm::vec2 r2;
