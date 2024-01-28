@@ -1,14 +1,16 @@
-add_executable(GGJ2024
+add_executable(CatFlat
   main.cpp
   cooking.cpp
   drawable.cpp
   fish.cpp
+  menu.cpp
+  house.cpp
 )
-target_link_options(GGJ2024 PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
-target_link_libraries(GGJ2024 GraphicsEnv)
-set(exec-name GGJ2024)
+target_link_options(CatFlat PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
+target_link_libraries(CatFlat GraphicsEnv)
+set(exec-name CatFlat)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../Graphics-Environment/cmake/copy-resources.cmake")
-add_custom_command(TARGET GGJ2024 POST_BUILD
+add_custom_command(TARGET CatFlat POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
   "${CMAKE_CURRENT_SOURCE_DIR}/../resources"
-  $<TARGET_FILE_DIR:GGJ2024>)
+  $<TARGET_FILE_DIR:CatFlat>)

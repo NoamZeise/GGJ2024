@@ -3,7 +3,6 @@
 #include "vec_math.h"
 #include <graphics/glm_helper.h>
 #include <graphics/logger.h>
-#include <game/random.h>
 
 Fish::Fish(Resource::Texture tex, float scale, glm::vec2 mid) : Drawable(tex, scale) {
     this->mid = mid;
@@ -15,7 +14,7 @@ Fish::Fish(Resource::Texture tex, float scale, glm::vec2 mid) : Drawable(tex, sc
 }
 
 void Fish::Update(Timer &timer) {
-    const float ACCEL = 0.04f;
+    const float ACCEL = 0.035f;
     const float SPEED = 0.0125f;
     vel += accel * (float)timer.dt() * ACCEL;
     change = vel * (float)timer.dt() * SPEED;
@@ -42,10 +41,10 @@ void Fish::Update(Timer &timer) {
 	fishOffscreen = false;
     }
     
-    if((r1.y > r2.y ? r2.y : r1.y) > WINDOW_HEIGHT)
+    if((r1.y > r2.y ? r2.y : r1.y) > WINDOW_HEIGHT*1.2f)
 	done = true;
 	//mid.y = -rect.w;
-    if(mid.x < -4 || (r1.x > r2.x ? r2.x : r1.x) > WINDOW_WIDTH - 10) {
+    if(mid.x < -4 || (r1.x > r2.x ? r2.x : r1.x) > WINDOW_WIDTH - rect.z/2) {
 	mid.x -= change.x;
 	vel.x *= -0.8;
     }
@@ -78,10 +77,20 @@ void Fish::panUpdate(glm::vec2 pan1, glm::vec2 pan2, glm::vec2 panVel) {
     if(c != glm::vec2(0) || wentThrough) {
 	if(!collided) {
 	    collided = true;
-	    doneness+=timeOff*0.001f;
-	    timeOff = 0;
-	    colour = glm::vec4((float)pow(1.0f/(float)doneness, 0.4));
-	    colour.a = 1.0f;
+	    if(doneness != 0 && doneness < FISH_IS_DONE) {
+		const glm::vec4 DONE = glm::vec4(0.8, 0.6, 0.4, 1.0f);
+		doneness += timeOff*0.001f;
+		if(doneness > FISH_IS_DONE)
+		    doneness = FISH_IS_DONE;
+		timeOff = 0;
+		float f = (FISH_IS_DONE - doneness) / FISH_IS_DONE;
+		colour = (f) * glm::vec4(1.0f) + (1 - f)  * DONE;
+	    } else if(doneness == 0) {
+		doneness = 0.1f;
+	    } else {
+		doneness += timeOff*0.001f;
+		colour = glm::vec4(2.0f, 2.0f, 0.0f, 1.0f);
+	    }
 	}
 	float pivotD = c.x - mid.x;
 	if(c == glm::vec2(0))
@@ -112,6 +121,8 @@ void Fish::Draw(Render* render) {
     rect.x = mid.x - rect.z/2;
     rect.y = mid.y - rect.w/2;
     Drawable::Draw(render);
-    if(fishOffscreen)
+    if(fishOffscreen) {
+	fishIndicator.depth = depth + DEPTH_STEP/100;
 	fishIndicator.Draw(render);
+    }
 }

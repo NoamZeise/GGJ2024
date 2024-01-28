@@ -4,6 +4,8 @@ include("Graphics-Environment/cmake/project-setup.cmake")
 
 set(ProjectName "GGJ2024")
 
+add_compile_definitions(NO_ASSIMP)
+
 if(BUILD_STATIC)
   set(GRAPHICS_BUILD_STATIC ON)
   if(MSVC)

@@ -2,6 +2,9 @@
 #define FISH_H
 
 #include "drawable.h"
+#include <game/random.h>
+
+const float FISH_IS_DONE = 15;
 
 class Fish : public Drawable  {
 public:
@@ -17,7 +20,7 @@ public:
 private:
     glm::vec2 vel = glm::vec2(0, 0);
     glm::vec2 accel = glm::vec2(0, 1);
-    float thetaVel = 0;//100;
+    float thetaVel = game::random::real() * 500;
     glm::vec2 change;
 
     glm::vec2 mid;
@@ -36,7 +39,7 @@ private:
     bool collided = false;
     float timeOff = 0;
     bool done = false;
-    float doneness = 1;
+    float doneness = 0;
 };
 
 #endif /* FISH_H */
