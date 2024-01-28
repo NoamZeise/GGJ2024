@@ -8,7 +8,10 @@ Drawable::Drawable(Resource::Texture tex, float scale) {
 }
 
 void Drawable::UpdateMat() {
+    glm::vec4 rect = this->rect;
+    rect.z *= drawable_size;
+    rect.w *= drawable_size;
     this->mat = glmhelper::calcMatFromRect(rect, rotate, depth);
 }
 
-void Drawable::Draw(Render *render) { UpdateMat(); render->DrawQuad(tex, mat); }
+void Drawable::Draw(Render *render) { UpdateMat(); render->DrawQuad(tex, mat, colour); }

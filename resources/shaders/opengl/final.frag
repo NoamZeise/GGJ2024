@@ -7,6 +7,7 @@ uniform sampler2D screenTexture;
 
 struct Props {
   float time;
+  float warp;
 };
 
 uniform Props ps;

@@ -24,8 +24,11 @@ public:
  private:
     Pan pan;
     Resource::Texture fishTex;
+    Resource::Font font;
     std::vector<Fish> fishes;
-    float timeElapsed;
+    float timeElapsed = 0;
+    int score = 0;
+    
 };
 
 

@@ -12,8 +12,10 @@ public:
     glm::vec4 rect;
     float rotate = 0;
     float depth = DEPTH_AVG;
+    float drawable_size = 1.0f;
+    glm::vec4 colour = glm::vec4(1.0f);
     void UpdateMat();
- private:
+ protected:
     Resource::Texture tex;
     glm::mat4 mat;
 };

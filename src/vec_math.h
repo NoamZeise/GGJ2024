@@ -6,8 +6,8 @@
 namespace gh {
     
     inline bool colliding(glm::vec2 l1, glm::vec2 l2) {
-	return l1.x < l2.x + l2.y &&
-	    l1.x + l1.y > l2.x;
+	return !(l1.x > l2.y ||
+		 l1.y < l2.x);
     }
     
   inline bool colliding(glm::vec4 a, glm::vec4 b)
@@ -29,7 +29,14 @@ namespace gh {
       }
       return glm::vec2(0);
   }
-  
+
+  static glm::vec2 rot(glm::vec2 p, float theta) {
+      glm::vec2 pn;
+      pn.x = p.x*cos(theta) - p.y*sin(theta);
+      pn.y = p.x*sin(theta) + p.y*cos(theta);
+      return pn;
+  }
+
 
 inline bool aInB(glm::vec4 a, glm::vec4 b)
 {
